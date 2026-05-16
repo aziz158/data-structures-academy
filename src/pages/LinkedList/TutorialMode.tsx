@@ -217,7 +217,7 @@ const TutorialMode = () => {
           {step.type === 'concept' && idx < STEPS.length - 1 && (
             <button
               onClick={advance}
-              className="w-full py-2.5 rounded font-chalk text-chalkboard-dark bg-chalk-yellow hover:bg-chalk-yellow/80 active:scale-95 text-base font-semibold transition-all"
+              className="w-full py-2.5 rounded font-chalk text-chalk-yellow border-2 border-chalk-yellow bg-chalk-yellow/15 hover:bg-chalk-yellow/25 active:scale-95 text-base font-semibold transition-all"
             >
               Next →
             </button>
@@ -241,7 +241,7 @@ const TutorialMode = () => {
           {/* Restart link */}
           <button
             onClick={() => { reset(); setLeavingIds([]); setIdx(0) }}
-            className="self-start font-chalk text-chalk-white/25 text-xs hover:text-chalk-red/55 transition-colors"
+            className="self-start font-chalk text-chalk-white/45 text-xs hover:text-chalk-red/70 transition-colors"
           >
             restart tutorial
           </button>

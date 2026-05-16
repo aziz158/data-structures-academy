@@ -123,18 +123,18 @@ const Card = ({ ds }: CardProps) => (
     {/* Phase badge */}
     <span
       className={`absolute top-3 right-3 font-chalk text-xs px-1.5 py-0.5 rounded ${
-        ds.live ? 'bg-chalk-yellow/20 text-chalk-yellow' : 'bg-chalk-white/10 text-chalk-white/35'
+        ds.live ? 'bg-chalk-yellow/20 text-chalk-yellow' : 'bg-chalk-white/10 text-chalk-white/50'
       }`}
     >
       P{ds.phase}
     </span>
 
-    <div className="font-chalk text-3xl text-chalk-white/40 mb-2 leading-none">{ds.icon}</div>
+    <div className="font-chalk text-3xl text-chalk-white/55 mb-2 leading-none">{ds.icon}</div>
 
     <h3 className={`font-chalk text-xl mb-1 ${ds.live ? 'text-chalk-white' : 'text-chalk-white/45'}`}>
       {ds.name}
     </h3>
-    <p className="font-hand text-chalk-white/38 text-sm">{ds.desc}</p>
+    <p className="font-hand text-chalk-white/60 text-sm">{ds.desc}</p>
 
     <div className="mt-4">
       {ds.live ? (
@@ -143,7 +143,7 @@ const Card = ({ ds }: CardProps) => (
           <span className="font-chalk text-chalk-green text-xs">Available now</span>
         </span>
       ) : (
-        <span className="font-chalk text-chalk-white/22 text-xs">Coming soon</span>
+        <span className="font-chalk text-chalk-white/40 text-xs">Coming soon</span>
       )}
     </div>
 

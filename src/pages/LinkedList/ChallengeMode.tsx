@@ -119,7 +119,7 @@ const ChallengeMode = () => {
                 onClick={() => setCIdx(i)}
                 className={`w-7 h-7 rounded-full font-chalk text-xs transition-all ${
                   i === cIdx
-                    ? 'bg-chalk-yellow text-chalkboard-dark'
+                    ? 'bg-chalk-yellow/25 border border-chalk-yellow text-chalk-yellow'
                     : done.has(i)
                     ? 'bg-chalk-green/25 border border-chalk-green/60 text-chalk-green'
                     : 'bg-chalk-white/8 border border-chalk-white/25 text-chalk-white/45'
@@ -172,7 +172,7 @@ const ChallengeMode = () => {
               <p className="font-chalk text-chalk-blue text-xs mb-2">Your list:</p>
               <div className="flex items-center gap-1 flex-wrap min-h-7">
                 {ordered.length === 0 ? (
-                  <span className="font-chalk text-chalk-white/28 text-xs">Empty</span>
+                  <span className="font-chalk text-chalk-white/50 text-xs">Empty</span>
                 ) : (
                   ordered.map((n, i) => {
                     const expected = challenge.values[i]
@@ -235,7 +235,7 @@ const ChallengeMode = () => {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={() => setCIdx(i => i + 1)}
-              className="py-2 rounded font-chalk text-chalkboard-dark bg-chalk-green hover:bg-chalk-green/80 transition-colors text-sm"
+              className="py-2 rounded font-chalk text-chalk-green border-2 border-chalk-green bg-chalk-green/15 hover:bg-chalk-green/25 transition-colors text-sm"
             >
               Next Challenge →
             </motion.button>

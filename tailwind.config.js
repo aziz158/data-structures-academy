@@ -12,9 +12,9 @@ export default {
       },
       colors: {
         chalkboard: {
-          dark: '#1B2D1B',
-          DEFAULT: '#2C3E2D',
-          light: '#3D5C3E',
+          dark: '#0D0D0D',
+          DEFAULT: '#161616',
+          light: '#242424',
         },
         chalk: {
           white: '#F5F0E8',

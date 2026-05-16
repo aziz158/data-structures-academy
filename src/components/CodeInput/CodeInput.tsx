@@ -122,7 +122,7 @@ const CodeInput = ({
         className="flex-1 overflow-y-auto px-4 pt-3 pb-1 space-y-1.5 min-h-0"
       >
         {history.length === 0 && (
-          <p className="font-hand text-chalk-white/28 text-xs italic pt-1">
+          <p className="font-hand text-chalk-white/55 text-xs italic pt-1">
             Type a command and press Enter…
           </p>
         )}
@@ -161,7 +161,7 @@ const CodeInput = ({
           <span className="font-hand text-chalk-white/35 text-xs">Try:</span>
           <span className="font-chalk text-chalk-yellow/70 text-xs">{hint}</span>
           {expectedCommand && (
-            <span className="ml-auto font-hand text-chalk-white/25 text-xs italic">
+            <span className="ml-auto font-hand text-chalk-white/50 text-xs italic">
               Type it to continue
             </span>
           )}
@@ -194,7 +194,7 @@ const CodeInput = ({
           />
         </div>
         {autocomplete && value && !disabled && (
-          <kbd className="text-chalk-white/22 text-[10px] font-hand border border-chalk-white/20 rounded px-1 py-0.5 leading-none shrink-0">
+          <kbd className="text-chalk-white/45 text-[10px] font-hand border border-chalk-white/30 rounded px-1 py-0.5 leading-none shrink-0">
             Tab
           </kbd>
         )}

@@ -32,7 +32,7 @@ const LinkedListPage = () => {
               onClick={() => setMode(m)}
               className={`px-4 py-1.5 font-chalk text-sm capitalize transition-colors ${
                 mode === m
-                  ? 'bg-chalk-yellow text-chalkboard-dark'
+                  ? 'bg-chalk-yellow/25 text-chalk-yellow border-b-2 border-chalk-yellow'
                   : 'text-chalk-white/55 hover:text-chalk-white hover:bg-chalk-white/8'
               }`}
             >
