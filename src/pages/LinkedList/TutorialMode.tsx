@@ -211,24 +211,39 @@ const TutorialMode = () => {
 
         <div className="flex-1" />
 
-        {/* Step type badge */}
-        <div className="flex items-center gap-2">
-          <span
-            className={`font-chalk text-xs px-2 py-0.5 rounded border ${
-              step.type === 'action'
-                ? 'border-chalk-yellow/40 text-chalk-yellow/70 bg-chalk-yellow/5'
-                : 'border-chalk-white/20 text-chalk-white/35'
-            }`}
-          >
-            {step.type === 'action' ? '⌨ type a command' : '↩ press Enter'}
-          </span>
+        {/* Navigation */}
+        <div className="flex flex-col gap-2">
+          {/* Concept step → big Next button */}
+          {step.type === 'concept' && idx < STEPS.length - 1 && (
+            <button
+              onClick={advance}
+              className="w-full py-2.5 rounded font-chalk text-chalkboard-dark bg-chalk-yellow hover:bg-chalk-yellow/80 active:scale-95 text-base font-semibold transition-all"
+            >
+              Next →
+            </button>
+          )}
 
-          {/* Restart */}
+          {/* Last concept step */}
+          {step.type === 'concept' && idx === STEPS.length - 1 && (
+            <div className="w-full py-2.5 rounded text-center font-chalk text-chalk-green text-base border border-chalk-green/40">
+              Tutorial complete! 🎉
+            </div>
+          )}
+
+          {/* Action step → show the command they need to type */}
+          {step.type === 'action' && (
+            <div className="flex flex-col gap-1.5 p-3 rounded border border-chalk-yellow/30 bg-chalk-yellow/5">
+              <span className="font-hand text-chalk-white/50 text-xs">Type in the console below:</span>
+              <span className="font-chalk text-chalk-yellow text-sm tracking-wide">{step.expected}</span>
+            </div>
+          )}
+
+          {/* Restart link */}
           <button
             onClick={() => { reset(); setLeavingIds([]); setIdx(0) }}
-            className="ml-auto font-chalk text-chalk-white/30 text-xs hover:text-chalk-red/60 transition-colors"
+            className="self-start font-chalk text-chalk-white/25 text-xs hover:text-chalk-red/55 transition-colors"
           >
-            restart
+            restart tutorial
           </button>
         </div>
       </div>
@@ -244,7 +259,7 @@ const TutorialMode = () => {
         <div className="flex-shrink-0 h-48 border-t border-chalk-white/15 bg-black/20">
           <CodeInput
             onCommand={handleCommand}
-            hint={step.hint}
+            hint={step.type === 'action' ? step.hint : undefined}
             expectedCommand={step.type === 'action' ? step.expected : undefined}
             onExpectedCommand={step.type === 'action' ? handleExpectedCommand : undefined}
             onEmptyEnter={step.type === 'concept' ? advance : undefined}
