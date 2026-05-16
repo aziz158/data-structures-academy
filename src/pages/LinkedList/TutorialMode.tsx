@@ -1,142 +1,178 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import LinkedListCanvas from '../../components/LinkedList/LinkedListCanvas'
 import StickFigure from '../../components/StickFigure/StickFigure'
+import CodeInput, { CommandResult } from '../../components/CodeInput/CodeInput'
 import useLinkedListStore from '../../store/useLinkedListStore'
 import { StickFigureState } from '../../types'
 
 interface Step {
-  id: number
+  type: 'concept' | 'action'
   title: string
   body: string
   code?: string
   figure: StickFigureState
-  action?: string
+  hint?: string
+  expected?: string // exact command required to advance
 }
 
 const STEPS: Step[] = [
   {
-    id: 0,
+    type: 'concept',
     title: 'Welcome to Linked Lists!',
-    body: 'A linked list is a linear data structure where elements are stored in individual nodes. Unlike arrays, nodes are not stored contiguously in memory.',
+    body: 'A linked list stores elements in nodes, each holding a value and a pointer to the next node. Unlike arrays, nodes live anywhere in memory.',
     figure: 'pointing',
+    hint: 'Press Enter to continue',
   },
   {
-    id: 1,
+    type: 'concept',
     title: 'Anatomy of a Node',
-    body: 'Every node holds two things:\n\n• DATA — the actual value\n• NEXT — a pointer (reference) to the next node in the sequence',
-    code: 'type Node = {\n  value: number\n  next: Node | null\n}',
+    body: 'Every node has two fields:\n• value — the stored data\n• next  — a reference to the next node (or null)',
+    code: 'type Node = {\n  value: number\n  next:  Node | null\n}',
     figure: 'drawing',
+    hint: 'Press Enter to continue',
   },
   {
-    id: 2,
+    type: 'concept',
     title: 'The HEAD Pointer',
-    body: 'The list tracks a single pointer called HEAD that always references the first node. Lose HEAD and you lose the entire list.',
+    body: 'The list tracks a single HEAD pointer that always references the first node. Lose HEAD and you lose the entire list.',
     code: 'type LinkedList = {\n  head: Node | null\n}',
     figure: 'pointing',
+    hint: 'Press Enter to continue',
   },
   {
-    id: 3,
-    title: 'Inserting at the Head — O(1)',
-    body: "Let's insert 5. A new node is created, its NEXT is set to the old HEAD, then HEAD is updated to point to our new node.",
-    code: 'function insertHead(val):\n  node = new Node(val)\n  node.next = head\n  head = node',
+    type: 'action',
+    title: 'Insert your first node',
+    body: 'Use list.append() to add the value 5. Watch it appear on the chalkboard!',
     figure: 'drawing',
-    action: 'insert-5',
+    hint: 'list.append(5)',
+    expected: 'list.append(5)',
   },
   {
-    id: 4,
-    title: 'Insert 12',
-    body: 'Inserting 12 the same way. The new node points to 5, and HEAD now points to 12. The list grows from the front.',
-    code: 'insertHead(12)\n// list: 12 → 5 → NULL',
+    type: 'action',
+    title: 'Add another node',
+    body: 'Append 12. It gets linked at the end — the previous node\'s next pointer now points to 12.',
+    code: '// after: 5 → 12 → NULL',
     figure: 'drawing',
-    action: 'insert-12',
+    hint: 'list.append(12)',
+    expected: 'list.append(12)',
   },
   {
-    id: 5,
-    title: 'Insert 8',
-    body: 'One more! Insert 8. Notice how each head insertion is constant time — no shifting like an array.',
-    code: 'insertHead(8)\n// list: 8 → 12 → 5 → NULL',
+    type: 'action',
+    title: 'One more!',
+    body: 'Append 8. Appending is O(n) — you have to walk to the tail first.',
+    code: '// after: 5 → 12 → 8 → NULL',
     figure: 'drawing',
-    action: 'insert-8',
+    hint: 'list.append(8)',
+    expected: 'list.append(8)',
   },
   {
-    id: 6,
-    title: 'Traversal — O(n)',
-    body: 'To visit all nodes, start at HEAD and follow each NEXT pointer until you reach NULL. You must visit every node, so it takes O(n) time.',
-    code: 'function traverse(head):\n  cur = head\n  while cur != null:\n    visit(cur.value)\n    cur = cur.next',
+    type: 'action',
+    title: 'Print the list',
+    body: 'Walk from HEAD to NULL, printing each value. O(n) traversal.',
+    code: 'function traverse(head):\n  cur = head\n  while cur != null:\n    print(cur.value)\n    cur = cur.next',
     figure: 'pointing',
+    hint: 'list.print()',
+    expected: 'list.print()',
   },
   {
-    id: 7,
-    title: 'Deletion — O(n)',
-    body: "To delete 12, find the node before it and make its NEXT skip over 12, pointing directly to 5 instead. Watch the canvas!",
+    type: 'action',
+    title: 'Delete a node',
+    body: 'Remove 12. The node before it updates its next pointer to skip over 12.',
     code: 'function delete(val):\n  prev = findPrev(val)\n  prev.next = prev.next.next',
     figure: 'drawing',
-    action: 'delete-12',
+    hint: 'list.delete(12)',
+    expected: 'list.delete(12)',
   },
   {
-    id: 8,
-    title: 'You Did It! 🎉',
-    body: 'You now understand:\n\n• Node structure (data + pointer)\n• HEAD pointer\n• Insertion O(1)\n• Traversal O(n)\n• Deletion O(n)\n\nTry Challenge Mode to test your skills!',
+    type: 'concept',
+    title: 'You nailed it! 🎉',
+    body: 'You learned:\n• Node anatomy (value + next)\n• HEAD pointer\n• append  — O(n)\n• delete  — O(n)\n• print   — O(n)\n\nSwitch to Challenge Mode to test your skills!',
     figure: 'celebrating',
+    hint: 'Press Enter to finish',
   },
 ]
 
 const TutorialMode = () => {
   const [idx, setIdx] = useState(0)
-  const [input, setInput] = useState('')
-  const { insertAtHead, deleteNode, reset, getOrderedNodes } = useLinkedListStore()
+  const [leavingIds, setLeavingIds] = useState<string[]>([])
+  const { insertAtHead, insertAtTail, deleteNode, reset, getOrderedNodes } = useLinkedListStore()
   const step = STEPS[idx]
+  const pendingDelete = useRef<Map<number, string>>(new Map()) // value → nodeId
 
-  useEffect(() => {
-    reset()
-    setIdx(0)
-  }, [reset])
+  useEffect(() => { reset(); setIdx(0) }, [reset])
 
-  const applyAction = (action?: string) => {
-    if (!action) return
-    if (action === 'insert-5')  insertAtHead(5)
-    if (action === 'insert-12') insertAtHead(12)
-    if (action === 'insert-8')  insertAtHead(8)
-    if (action === 'delete-12') deleteNode(12)
-  }
+  const advance = useCallback(() => {
+    if (idx < STEPS.length - 1) setIdx(i => i + 1)
+  }, [idx])
 
-  const handleNext = () => {
-    applyAction(step.action)
-    if (idx < STEPS.length - 1) setIdx((i) => i + 1)
-  }
+  const handleNodeLeft = useCallback((id: string) => {
+    useLinkedListStore.getState().deleteById(id)
+    setLeavingIds(ids => ids.filter(x => x !== id))
+  }, [])
 
-  const handlePrev = () => {
-    if (idx > 0) {
-      reset()
-      setIdx((i) => i - 1)
-    }
-  }
+  const handleCommand = useCallback(
+    (method: string, arg: number | undefined, raw: string): CommandResult => {
+      const ordered = getOrderedNodes()
 
-  const handleManualInsert = () => {
-    const v = parseInt(input, 10)
-    if (!isNaN(v)) {
-      insertAtHead(v)
-      setInput('')
-    }
-  }
+      if (method === 'append' || method === 'insert' || method === 'prepend') {
+        if (arg === undefined) return { output: 'Provide a value: list.append(5)', status: 'error' }
+        if (method === 'prepend' || method === 'insert') {
+          insertAtHead(arg)
+        } else {
+          insertAtTail(arg)
+        }
+        return { output: `✓ Node ${arg} ${method === 'append' ? 'appended to end' : 'inserted at head'}`, status: 'ok' }
+      }
 
-  const ordered = getOrderedNodes()
+      if (method === 'delete') {
+        if (arg === undefined) return { output: 'Provide a value: list.delete(5)', status: 'error' }
+        const target = getOrderedNodes().find(n => n.value === arg)
+        if (!target) return { output: `✗ Value ${arg} not found in list`, status: 'error' }
+        setLeavingIds(ids => [...ids, target.id])
+        return { output: `✓ Deleting node ${arg}…`, status: 'ok' }
+      }
+
+      if (method === 'clear') {
+        if (ordered.length === 0) return { output: 'List is already empty', status: 'info' }
+        setLeavingIds(ordered.map(n => n.id))
+        return { output: '✓ Clearing list…', status: 'ok' }
+      }
+
+      if (method === 'print') {
+        const vals = ordered.map(n => n.value)
+        if (vals.length === 0) return { output: 'List is empty', status: 'info' }
+        return { output: `HEAD → ${vals.join(' → ')} → NULL`, status: 'info' }
+      }
+
+      if (method === 'length' || method === 'size') {
+        return { output: `Length: ${ordered.length}`, status: 'info' }
+      }
+
+      return { output: `Unknown method: ${method}`, status: 'error' }
+    },
+    [getOrderedNodes, insertAtHead, insertAtTail, reset]
+  )
+
+  const handleExpectedCommand = useCallback(() => {
+    advance()
+  }, [advance])
+
 
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Left panel ── */}
-      <div className="w-[300px] flex-shrink-0 flex flex-col border-r border-chalk-white/15 p-4 gap-3 overflow-y-auto">
-        {/* Progress */}
+      <div className="w-[288px] flex-shrink-0 flex flex-col border-r border-chalk-white/15 p-4 gap-3 overflow-y-auto">
+        {/* Progress bar */}
         <div className="flex items-center gap-2">
-          <span className="font-chalk text-chalk-yellow text-sm whitespace-nowrap">
+          <span className="font-chalk text-chalk-yellow text-sm shrink-0">
             {idx + 1} / {STEPS.length}
           </span>
           <div className="flex-1 bg-chalk-white/10 rounded-full h-1.5 overflow-hidden">
             <motion.div
               className="h-1.5 rounded-full bg-chalk-yellow"
               animate={{ width: `${((idx + 1) / STEPS.length) * 100}%` }}
-              transition={{ duration: 0.35 }}
+              transition={{ duration: 0.3 }}
             />
           </div>
         </div>
@@ -153,10 +189,12 @@ const TutorialMode = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.22 }}
             className="flex flex-col gap-2.5"
           >
-            <h3 className="font-chalk text-chalk-yellow text-[1.2rem] leading-tight">{step.title}</h3>
+            <h3 className="font-chalk text-chalk-yellow text-[1.15rem] leading-tight">
+              {step.title}
+            </h3>
             <p className="font-hand text-chalk-white/85 text-sm leading-relaxed whitespace-pre-line">
               {step.body}
             </p>
@@ -173,63 +211,44 @@ const TutorialMode = () => {
 
         <div className="flex-1" />
 
-        {/* Nav buttons */}
-        <div className="flex gap-2 pt-2">
-          <button
-            onClick={handlePrev}
-            disabled={idx === 0}
-            className="flex-1 py-2 rounded font-chalk text-chalk-white/65 border border-chalk-white/25 hover:bg-chalk-white/10 disabled:opacity-30 text-sm transition-colors"
+        {/* Step type badge */}
+        <div className="flex items-center gap-2">
+          <span
+            className={`font-chalk text-xs px-2 py-0.5 rounded border ${
+              step.type === 'action'
+                ? 'border-chalk-yellow/40 text-chalk-yellow/70 bg-chalk-yellow/5'
+                : 'border-chalk-white/20 text-chalk-white/35'
+            }`}
           >
-            ← Back
-          </button>
+            {step.type === 'action' ? '⌨ type a command' : '↩ press Enter'}
+          </span>
+
+          {/* Restart */}
           <button
-            onClick={handleNext}
-            disabled={idx === STEPS.length - 1}
-            className="flex-1 py-2 rounded font-chalk text-chalkboard-dark bg-chalk-yellow hover:bg-chalk-yellow/80 disabled:opacity-30 text-sm font-semibold transition-colors"
+            onClick={() => { reset(); setLeavingIds([]); setIdx(0) }}
+            className="ml-auto font-chalk text-chalk-white/30 text-xs hover:text-chalk-red/60 transition-colors"
           >
-            {step.action ? 'Apply →' : 'Next →'}
+            restart
           </button>
         </div>
       </div>
 
-      {/* ── Canvas + controls ── */}
+      {/* ── Canvas + REPL ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Canvas */}
         <div className="flex-1 overflow-hidden">
-          <LinkedListCanvas />
+          <LinkedListCanvas leavingIds={leavingIds} onNodeLeft={handleNodeLeft} />
         </div>
 
-        {/* Bottom controls */}
-        <div className="flex-shrink-0 border-t border-chalk-white/15 px-4 py-2.5 flex items-center gap-3 flex-wrap">
-          <input
-            type="number"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleManualInsert()}
-            placeholder="value"
-            className="w-24 px-3 py-1.5 rounded bg-black/30 border border-chalk-white/25 font-chalk text-chalk-white text-sm placeholder-chalk-white/25 focus:outline-none focus:border-chalk-yellow"
+        {/* Code input */}
+        <div className="flex-shrink-0 h-48 border-t border-chalk-white/15 bg-black/20">
+          <CodeInput
+            onCommand={handleCommand}
+            hint={step.hint}
+            expectedCommand={step.type === 'action' ? step.expected : undefined}
+            onExpectedCommand={step.type === 'action' ? handleExpectedCommand : undefined}
+            onEmptyEnter={step.type === 'concept' ? advance : undefined}
           />
-          <button
-            onClick={handleManualInsert}
-            className="px-3 py-1.5 rounded bg-chalk-blue/15 border border-chalk-blue/45 font-chalk text-chalk-blue text-sm hover:bg-chalk-blue/25 transition-colors"
-          >
-            Insert at head
-          </button>
-          <button
-            onClick={() => ordered[0] && deleteNode(ordered[0].value)}
-            disabled={ordered.length === 0}
-            className="px-3 py-1.5 rounded bg-chalk-red/15 border border-chalk-red/45 font-chalk text-chalk-red text-sm hover:bg-chalk-red/25 transition-colors disabled:opacity-30"
-          >
-            Delete head
-          </button>
-          <button
-            onClick={reset}
-            className="px-3 py-1.5 rounded bg-chalk-white/8 border border-chalk-white/20 font-chalk text-chalk-white/60 text-sm hover:bg-chalk-white/15 transition-colors"
-          >
-            Reset
-          </button>
-          <span className="ml-auto font-chalk text-chalk-white/35 text-sm">
-            {ordered.length} node{ordered.length !== 1 ? 's' : ''}
-          </span>
         </div>
       </div>
     </div>
